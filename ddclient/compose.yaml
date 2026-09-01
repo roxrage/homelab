@@ -1,0 +1,16 @@
+# ddclient
+
+services:
+  ddclient:
+    image: linuxserver/ddclient
+    container_name: ddclient
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - CLOUDFLARE_LOGIN_EMAIL=${CLOUDFLARE_LOGIN_EMAIL}
+      - CLOUDFLARE_LOGIN_PW=${CLOUDFLARE_LOGIN_PW}
+      - CLOUDFLARE_DOMAIN=${CLOUDFLARE_DOMAIN}
+    volumes:
+      - ${HOME}/ddclient/config:/config
+    restart: unless-stopped

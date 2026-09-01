@@ -1,0 +1,36 @@
+# docker compose for caddy
+
+services:
+
+  caddy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: caddy
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+      - DOMAIN_CLOUD=${DOMAIN_CLOUD}
+      - DOMAIN_PW_MANAGER=${DOMAIN_PW_MANAGER}
+      - DOMAIN_GAMESERVER=${DOMAIN_GAMESERVER}
+      - ACME_AGREE=true
+      - TZ=Europe/Berlin
+    ports:
+      - "80:80"
+      - "443:443"
+    expose:
+      - 80 # http
+      - 443 # https
+    volumes:
+      - ${HOME}/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ${HOME}/caddy/data:/data
+      - ${HOME}/caddy/config:/config
+    networks:
+      - caddy_net
+
+networks:
+  caddy_net:
+    name: caddy_net
+    driver: bridge
