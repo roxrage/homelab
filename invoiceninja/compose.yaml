@@ -19,7 +19,6 @@ services:
     image: nginx:alpine
     container_name: invoiceninja-web
     restart: unless-stopped
-    # Keine exposed Host-Ports nötig!
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./public:/var/www/app/public:ro
@@ -46,6 +45,39 @@ services:
     restart: unless-stopped
     volumes:
       - ./redis-data:/data:rw
+    networks:
+      - ninja-internal
+
+  invoiceninja-cron:
+    image: invoiceninja/invoiceninja:5
+    container_name: invoiceninja-cron
+    restart: always
+    env_file: .env
+    volumes:
+      - ./storage:/var/www/app/storage
+      - ./public:/var/www/app/public
+    depends_on:
+      - invoiceninja-app
+      - invoiceninja-db
+    entrypoint: ["/bin/sh", "-c", "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"]
+    networks:
+      - ninja-internal
+
+  invoiceninja-backup:
+    image: fradelg/mysql-cron-backup:latest
+    container_name: invoiceninja-backup
+    restart: unless-stopped
+    depends_on:
+      - invoiceninja-db
+    environment:
+      - MYSQL_HOST=invoiceninja-db
+      - MYSQL_USER=ninja
+      - MYSQL_PASS=${DB_PASSWORD}
+      - MYSQL_DATABASE=ninja
+      - CRON_TIME=0 3 * * *      # Jeden Tag um 03:00 Uhr
+      - MAX_BACKUPS=365           # 365 Tage aufbewahren
+    volumes:
+      - /raid1/invoiceninja-backups:/backup
     networks:
       - ninja-internal
 
