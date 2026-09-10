@@ -34,5 +34,11 @@
         resolvers 1.1.1.1
     }
 
-    reverse_proxy invoiceninja-web:80
+    request_body {
+        max_size 50MB
+    }
+
+    reverse_proxy invoiceninja-web:80 {
+        header_up X-Forwarded-Proto https
+    }
 }
