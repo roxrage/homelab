@@ -1,0 +1,54 @@
+services:
+  pterodactyl-db:
+    image: mariadb:11.4
+    container_name: pterodactyl-db
+    restart: unless-stopped
+    command: --innodb-file-per-table=1 --lower-case-table-names=1
+    volumes:
+      - ./database:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${PANEL_DB_PASSWORD}
+      - MYSQL_DATABASE=panel
+      - MYSQL_USER=pterodactyl
+      - MYSQL_PASSWORD=${PANEL_DB_PASSWORD}
+    networks:
+      - ptero_internal
+
+  pterodactyl-redis:
+    image: redis:7-alpine
+    container_name: pterodactyl-redis
+    restart: unless-stopped
+    networks:
+      - ptero_internal
+
+  pterodactyl-panel:
+    image: ghcr.io/pterodactyl/panel:latest
+    container_name: pterodactyl-panel
+    restart: unless-stopped
+    volumes:
+      - ./panel/var/:/app/var/
+      - ./panel/nginx/:/etc/nginx/http.d/
+      - ./panel/certs/:/app/certs/
+      - ./panel/logs/:/app/storage/logs/
+    environment:
+      - APP_ENV=production
+      - APP_ENVIRONMENT_ONLY=false
+      - APP_URL=https://${DOMAIN_PANEL}
+      - APP_TIMEZONE=Europe/Berlin
+      - DB_HOST=pterodactyl-db
+      - DB_PORT=3306
+      - DB_DATABASE=panel
+      - DB_USERNAME=pterodactyl
+      - DB_PASSWORD=${PANEL_DB_PASSWORD}
+      - REDIS_HOST=pterodactyl-redis
+    networks:
+      - ptero_internal
+      - caddy_net
+
+networks:
+  ptero_internal:
+    name: ptero_internal
+    driver: bridge
+  caddy_net:
+    name: caddy_net
+    external: true
