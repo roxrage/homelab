@@ -42,3 +42,13 @@
         header_up X-Forwarded-Proto https
     }
 }
+
+# local ai reverse proxy
+{$DOMAIN_AI} {
+    tls {
+        dns cloudflare {$CLOUDFLARE_API_TOKEN}
+        resolvers 1.1.1.1
+    }
+
+    reverse_proxy open-webui:8080
+}
