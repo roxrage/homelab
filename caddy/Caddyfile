@@ -52,3 +52,18 @@
 
     reverse_proxy open-webui:8080
 }
+
+# vaultwarden
+{$DOMAIN_VAULT} {
+    encode gzip zstd
+
+    # Optional: Restrict /admin to your LAN or WireGuard subnets
+    @admin {
+        path /admin*
+        not remote_ip 192.168.1.0/24 10.8.0.0/24 127.0.0.1
+    }
+    respond @admin "Access Denied" 403
+
+    # Route directly to the container name on internal port 80
+    reverse_proxy vaultwarden:80
+}

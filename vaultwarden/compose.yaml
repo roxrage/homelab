@@ -1,0 +1,40 @@
+# vaultwarden
+
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    environment:
+      - DOMAIN=${VAULT_DOMAIN}
+      # use true for deployment, then disable it!
+      - SIGNUPS_ALLOWED=false
+      - ADMIN_TOKEN=${ADMIN_TOKEN_ESCAPED}
+    volumes:
+      - /opt/appdata/vaultwarden/data:/data
+    networks:
+      - caddy_net
+
+  vaultwarden-backup:
+    image: bruceforce/vaultwarden-backup:latest
+    container_name: vaultwarden-backup
+    restart: unless-stopped
+    depends_on:
+      - vaultwarden
+    environment:
+      # Run daily at 03:00 (matching Invoice Ninja)
+      - CRON_TIME=0 3 * * *
+      # Automatically delete archives older than 365 days
+      - BACKUP_KEEP_DAYS=365
+      # Also bundle attachments and Bitwarden Sends
+      - BACKUP_ADD_ATTACHMENTS=true
+      - BACKUP_ADD_SENDS=true
+    volumes:
+      # Mount Vaultwarden data read-only
+      - /opt/appdata/vaultwarden/data:/data:ro
+      # Target RAID backup folder
+      - /raid1/vaultwarden-backup:/backup
+
+networks:
+  caddy_net:
+    external: true
