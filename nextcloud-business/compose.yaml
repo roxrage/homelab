@@ -3,7 +3,18 @@ services:
     image: mariadb:10.11
     container_name: nextcloud-business-db
     restart: unless-stopped
-    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    command:
+      - --transaction-isolation=READ-COMMITTED
+      - --binlog-format=ROW
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+      - --innodb-buffer-pool-size=1G
+      - --innodb-log-file-size=256M
+      - --slow-query-log=1
+      - --slow-query-log-file=/var/lib/mysql/mariadb-slow.log
+      - --long-query-time=2
+      - --table-open-cache=4000
+      - --table-definition-cache=4000
     volumes:
       - /opt/nextcloud-business/db:/var/lib/mysql
     environment:
