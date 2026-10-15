@@ -1,0 +1,52 @@
+services:
+  db:
+    image: mariadb:10.11
+    container_name: nextcloud-business-db
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    volumes:
+      - /opt/nextcloud-business/db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+    networks:
+      - nextcloud-business-net
+
+  redis:
+    image: redis:alpine
+    container_name: nextcloud-business-redis
+    restart: unless-stopped
+    networks:
+      - nextcloud-business-net
+
+  app:
+    image: nextcloud:apache
+    container_name: nextcloud-business-app
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8088:80"
+    volumes:
+      - /opt/nextcloud-business/config:/var/www/html
+      - /raid1/nextcloud-business-data:/var/www/html/data
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - REDIS_HOST=redis
+      - OVERWRITEHOST=${NC_DOMAIN}
+      - OVERWRITEPROTOCOL=https
+      - TRUSTED_PROXIES=127.0.0.1 172.16.0.0/12
+      - PHP_MEMORY_LIMIT=${PHP_MEMORY_LIMIT}
+      - PHP_UPLOAD_LIMIT=${PHP_UPLOAD_LIMIT}
+    depends_on:
+      - db
+      - redis
+    networks:
+      - nextcloud-business-net
+
+networks:
+  nextcloud-business-net:
+    name: nextcloud-business-net

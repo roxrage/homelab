@@ -15,6 +15,11 @@ services:
       - DOMAIN_CLOUD=${DOMAIN_CLOUD}
       - DOMAIN_PW_MANAGER=${DOMAIN_PW_MANAGER}
       - DOMAIN_PANEL=${DOMAIN_PANEL}
+      - DOMAIN_NODE=${DOMAIN_NODE}
+      - DOMAIN_INVOICE=${DOMAIN_INVOICE}
+      - DOMAIN_AI=${DOMAIN_AI}
+      - DOMAIN_VAULT=${DOMAIN_VAULT}
+      - DOMAIN_NEXTCLOUD_BUSINESS=${DOMAIN_NEXTCLOUD_BUSINESS}
       - ACME_AGREE=true
       - TZ=Europe/Berlin
     ports:
@@ -29,8 +34,11 @@ services:
       - ${HOME}/caddy/config:/config
     networks:
       - caddy_net
+      - nextcloud-business-net
 
 networks:
   caddy_net:
     name: caddy_net
     driver: bridge
+  nextcloud-business-net:
+    external: true
