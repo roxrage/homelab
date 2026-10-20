@@ -97,3 +97,11 @@
 
     encode gzip zstd
 }
+
+# forgejo reverse proxy
+{$DOMAIN_FORGEJO} {
+    request_body {
+        max_size 5GB
+    }
+    reverse_proxy forgejo:3000
+}

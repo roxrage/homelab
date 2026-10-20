@@ -1,0 +1,75 @@
+# This is a docker-compose file for Forgejo, a self-hosted Git service.
+
+services:
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:9
+    container_name: forgejo
+    restart: unless-stopped
+    networks:
+      - caddy_net
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      # Server domain & URL generation for Caddy
+      - FORGEJO__server__DOMAIN=${DOMAIN}
+      - FORGEJO__server__ROOT_URL=https://${DOMAIN}/
+      # Git SSH routing
+      - FORGEJO__server__SSH_PORT=2222
+      - FORGEJO__server__SSH_LISTEN_PORT=22
+      # Completely disable CI/CD Actions engine
+      - FORGEJO__actions__ENABLED=false
+    volumes:
+      # Application data & SQLite DB on local NVMe
+      - /opt/forgejo/data:/data
+      # Actual Git repositories stored safely on the RAID array
+      - /raid1/forgejo/repositories:/data/git/repositories
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "2222:22" # SSH clone port mapped to host
+
+
+  forgejo-backup:
+    image: alpine:latest
+    container_name: forgejo-backup
+    restart: unless-stopped
+    depends_on:
+      - forgejo
+    volumes:
+      - /opt/forgejo/data/gitea:/source:ro
+      - /raid1/forgejo/backups:/backups
+    entrypoint: |
+      /bin/sh -c '
+      apk add --no-cache sqlite tzdata
+
+      cat << "EOF" > /etc/periodic/daily/sqlite-backup
+      #!/bin/sh
+      DAY_OF_MONTH=$$(date +%d)
+      TIMESTAMP=$$(date +%Y%m%d_%H%M%S)
+
+      # Use single quotes for the target filename string literal
+      sqlite3 /source/gitea.db "VACUUM INTO '\''/backups/forgejo_db_$${TIMESTAMP}.db'\'';"
+      gzip -9 "/backups/forgejo_db_$${TIMESTAMP}.db"
+
+      # Tag monthly backup on the 1st
+      if [ "$$DAY_OF_MONTH" = "01" ]; then
+        cp "/backups/forgejo_db_$${TIMESTAMP}.db.gz" "/backups/monthly_forgejo_db_$$(date +%Y%m).db.gz"
+      fi
+
+      # Retention cleanup
+      find /backups -name "forgejo_db_*.db.gz" -type f -mtime +30 -delete
+      find /backups -name "monthly_forgejo_db_*.db.gz" -type f -mtime +365 -delete
+      EOF
+
+      chmod +x /etc/periodic/daily/sqlite-backup
+
+      # Run an initial backup immediately on boot
+      /etc/periodic/daily/sqlite-backup
+
+      # Start cron
+      crond -f -l 2
+      '
+
+networks:
+  caddy_net:
+    external: true
