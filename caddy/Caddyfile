@@ -105,3 +105,22 @@
     }
     reverse_proxy forgejo:3000
 }
+
+{$DOMAIN_JOOMLA_STAGING} {
+    # 1. Require HTTP Basic Authentication
+    basic_auth {
+        # Format: <username> <hashed-password>
+        admin {$CADDY_HASH}
+    }
+
+    # 2. Block search engine indexing via HTTP headers
+    header {
+        X-Robots-Tag "noindex, nofollow, noarchive"
+    }
+
+    # 3. Reverse proxy to your local Joomla container
+    reverse_proxy joomla-local-web:80 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+    }
+}
