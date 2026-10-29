@@ -20,6 +20,7 @@ services:
       - DOMAIN_AI=${DOMAIN_AI}
       - DOMAIN_VAULT=${DOMAIN_VAULT}
       - DOMAIN_NEXTCLOUD_BUSINESS=${DOMAIN_NEXTCLOUD_BUSINESS}
+      - DOMAIN_PENPOT=${DOMAIN_PENPOT}
       - ACME_AGREE=true
       - TZ=Europe/Berlin
     ports:

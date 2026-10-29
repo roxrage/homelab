@@ -124,3 +124,21 @@
         header_up X-Real-IP {remote_host}
     }
 }
+
+# penpot reverse proxy
+{$DOMAIN_PENPOT} {
+    tls {
+        dns cloudflare {$CLOUDFLARE_API_TOKEN}
+        resolvers 1.1.1.1
+    }
+
+    request_body {
+        max_size 100MB
+    }
+
+    reverse_proxy penpot-frontend:8080 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-Proto https
+    }
+}
