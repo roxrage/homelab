@@ -12,7 +12,8 @@ services:
       - penpot_assets:/opt/data/assets
     environment:
       - PENPOT_BACKEND_URI=http://penpot-backend:6060
-      - PENPOT_FLAGS=enable-smtp,enable-email-verification,enable-registration
+      - PENPOT_EXPORTER_URI=http://penpot-exporter:6061
+      - PENPOT_FLAGS=enable-smtp enable-email-verification enable-registration enable-tiered-file-data-storage
     depends_on:
       - penpot-backend
       - penpot-exporter
@@ -40,7 +41,10 @@ services:
       - PENPOT_SMTP_PASSWORD=${PENPOT_SMTP_PASSWORD}
       - PENPOT_SMTP_TLS=${PENPOT_SMTP_TLS}
       - PENPOT_SMTP_SSL=${PENPOT_SMTP_SSL}
-      - PENPOT_FLAGS=enable-smtp,enable-email-verification,enable-registration
+      - PENPOT_FLAGS=enable-smtp enable-email-verification enable-registration enable-tiered-file-data-storage
+      - PENPOT_OBJECTS_STORAGE_BACKEND=fs
+      - PENPOT_OBJECTS_STORAGE_FS_DIRECTORY=/opt/data/assets
+      - PENPOT_FILE_DATA_BACKEND=db
     depends_on:
       - penpot-postgres
       - penpot-redis
